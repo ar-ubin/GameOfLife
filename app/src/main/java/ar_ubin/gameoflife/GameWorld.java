@@ -1,95 +1,78 @@
 package ar_ubin.gameoflife;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.view.MotionEvent;
-import android.view.View;
 
-public class GameWorld extends View
+import java.util.HashSet;
+import java.util.Set;
+
+class GameWorld
 {
-    private int mColumns, mRows;
-    private int mCellWidth, mCellHeight;
-    private boolean[][] mVisitedCells;
+    private Set<Cell> mAliveCells = new HashSet<>();
 
-    private Paint mGridPaint = new Paint();
-    private Paint mCellPaint = new Paint();
-    private Paint mBackgroundPaint = new Paint();
+    public GameWorld() {}
 
-    public GameWorld( Context context, int width, int height ) {
-        this( context, null );
-        mColumns = width;
-        mRows = height;
+    public void addCell( Cell cell ) {
+        mAliveCells.add( cell );
     }
 
-    private GameWorld( Context context, AttributeSet attrs ) {
-        super( context, attrs );
-        mBackgroundPaint.setColor( Color.BLACK );
-        mGridPaint.setStyle( Paint.Style.FILL_AND_STROKE );
-        mCellPaint.setColor( Color.BLUE );
-    }
+    public Set<Cell> getNeighbours( Cell cell ) {
+        Set<Cell> neighbours = new HashSet<>();
+        Set<Cell> neighbourhood = getNeighbourhood( cell );
 
-    @Override
-    protected void onSizeChanged( int w, int h, int oldw, int oldh ) {
-        super.onSizeChanged( w, h, oldw, oldh );
-        calculateDimensions();
-    }
-
-    private void calculateDimensions() {
-        if( mColumns < 1 || mRows < 1 ) {
-            return;
-        }
-
-        mCellWidth = getWidth() / mColumns;
-        mCellHeight = getHeight() / mRows;
-
-        mVisitedCells = new boolean[mColumns][mRows];
-
-        invalidate();
-    }
-
-    @Override
-    protected void onDraw( Canvas canvas ) {
-        canvas.drawPaint( mBackgroundPaint );
-
-        if( mColumns == 0 || mRows == 0 ) {
-            return;
-        }
-
-        int width = getWidth();
-        int height = getHeight();
-
-        for( int i = 0; i < mColumns; i++ ) {
-            for( int j = 0; j < mRows; j++ ) {
-                if( mVisitedCells[i][j] ) {
-
-                    canvas.drawRect( i * mCellWidth, j * mCellHeight, ( i + 1 ) * mCellWidth, ( j + 1 ) * mCellHeight,
-                            mCellPaint );
-                }
+        for( Cell c : neighbourhood ) {
+            if( isAlive( c ) ) {
+                neighbours.add( c );
             }
         }
 
-        for( int i = 1; i < mColumns; i++ ) {
-            canvas.drawLine( i * mCellWidth, 0, i * mCellWidth, height, mGridPaint );
-        }
+        neighbours.remove( cell );
 
-        for( int i = 1; i < mRows; i++ ) {
-            canvas.drawLine( 0, i * mCellHeight, width, i * mCellHeight, mGridPaint );
-        }
+        return neighbours;
     }
 
-    @Override
-    public boolean onTouchEvent( MotionEvent event ) {
-        if( event.getAction() == MotionEvent.ACTION_MOVE ) {
-            int column = (int) ( event.getX() / mCellWidth );
-            int row = (int) ( event.getY() / mCellHeight );
+    private Set<Cell> getNeighbourhood( Cell cell ) {
+        Set<Cell> neighbourhood = new HashSet<>();
 
-            mVisitedCells[column][row] = !mVisitedCells[column][row];
-            invalidate();
+        for( int dx = -1; dx <= 1; dx++ ) {
+            for( int dy = -1; dy <= 1; dy++ ) {
+                Cell c = new Cell( cell.mXCoordinate + dx, cell.mYCoordinate + dy );
+                neighbourhood.add( c );
+            }
         }
 
-        return true;
+        return neighbourhood;
+    }
+
+    public boolean isAlive( Cell cell ) {
+        return mAliveCells.contains( cell );
+    }
+
+    public GameWorld nextIteration() {
+        GameWorld world = new GameWorld();
+
+        Set<Cell> potentialCellsToReborn = new HashSet<>();
+
+        for( Cell cell : mAliveCells ) {
+            if( shouldBeAliveInNextIteration( cell ) ) {
+                world.addCell( cell );
+            }
+
+            potentialCellsToReborn.addAll( getNeighbourhood( cell ) );
+        }
+
+        for( Cell cell : potentialCellsToReborn ) {
+            if( shouldBornInNextIteration( cell ) ) {
+                world.addCell( cell );
+            }
+        }
+
+        return world;
+    }
+
+    private boolean shouldBeAliveInNextIteration( Cell cell ) {
+        return getNeighbours( cell ).size() == 2 || getNeighbours( cell ).size() == 3;
+    }
+
+    private boolean shouldBornInNextIteration( Cell cell ) {
+        return !isAlive( cell ) && getNeighbours( cell ).size() == 3;
     }
 }
