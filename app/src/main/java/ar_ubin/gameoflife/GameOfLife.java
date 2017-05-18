@@ -50,7 +50,7 @@ class GameOfLife
 
                         public void run() {
                             mWorld = nextGeneration();
-                            gameView.setNextGeneration( mWorld );
+                            gameView.nextGeneration( mWorld );
                         }
                     } );
                 }
