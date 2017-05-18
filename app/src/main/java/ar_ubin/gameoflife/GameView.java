@@ -4,8 +4,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.AttributeSet;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 
 import java.util.Random;
@@ -13,47 +13,59 @@ import java.util.Random;
 public class GameView extends View
 {
     private GameWorld mWorld;
-    private int mColumns, mRows;
-    private int mCellWidth, mCellHeight;
+    private final float WORLD_WIDTH, WORLD_HEIGHT;
+    private float mColumns, mRows;
+    private float mCellWidth, mCellHeight;
+
+    private ScaleGestureDetector mScaleDetector;
+    private final float MAX_SCALE_FACTOR = 3.0f;
+    private final float DEFAULT_SCALE_FACTOR = 1.0f;
+    private final float MIN_SCALE_FACTOR = 0.4f;
+
+    private float mScaleFactor = DEFAULT_SCALE_FACTOR;
 
     private Paint mGridPaint = new Paint();
     private Paint mCellPaint = new Paint();
     private Paint mBackgroundPaint = new Paint();
 
     public GameView( Context context, int width, int height, GameOfLife game ) {
-        this( context, null );
-        mColumns = width;
-        mRows = height;
-        mWorld = game.getWorld();
-    }
-
-    private GameView( Context context, AttributeSet attrs ) {
-        super( context, attrs );
+        super( context );
         mBackgroundPaint.setColor( Color.WHITE );
         mGridPaint.setStyle( Paint.Style.FILL_AND_STROKE );
         mCellPaint.setColor( getRandomColor() );
+
+        WORLD_WIDTH = width;
+        WORLD_HEIGHT = height;
+        mColumns = WORLD_WIDTH;
+        mRows = WORLD_HEIGHT;
+
+        mWorld = game.getWorld();
+        mScaleDetector = new ScaleGestureDetector( context, new ScaleListener() );
     }
 
     @Override
     protected void onSizeChanged( int w, int h, int oldw, int oldh ) {
         super.onSizeChanged( w, h, oldw, oldh );
         calculateDimensions();
+        invalidate();
     }
 
     private void calculateDimensions() {
         if( mColumns < 1 || mRows < 1 ) {
             return;
         }
+        mColumns = WORLD_WIDTH / mScaleFactor;
+        mRows = WORLD_HEIGHT / mScaleFactor;
 
         mCellWidth = getWidth() / mColumns;
         mCellHeight = getHeight() / mRows;
-
-        invalidate();
     }
 
     @Override
     protected void onDraw( Canvas canvas ) {
+        scale( canvas );
         canvas.drawPaint( mBackgroundPaint );
+        canvas.restore();
 
         if( mColumns == 0 || mRows == 0 ) {
             return;
@@ -61,6 +73,11 @@ public class GameView extends View
 
         drawCells( canvas );
         drawGrid( canvas );
+    }
+
+    private void scale( Canvas canvas ) {
+        canvas.save();
+        canvas.scale( mScaleFactor, mScaleFactor );
     }
 
     private void drawCells( Canvas canvas ) {
@@ -103,10 +120,12 @@ public class GameView extends View
             mCellPaint.setColor( getRandomColor() );
         }
 
+        mScaleDetector.onTouchEvent( event );
+
         return true;
     }
 
-    public void setNextGeneration( GameWorld world ) {
+    public void nextGeneration( GameWorld world ) {
         mWorld = world;
         invalidate();
     }
@@ -114,5 +133,18 @@ public class GameView extends View
     private int getRandomColor() {
         Random rnd = new Random();
         return Color.argb( 255, rnd.nextInt( 256 ), rnd.nextInt( 256 ), rnd.nextInt( 256 ) );
+    }
+
+    private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener
+    {
+        @Override
+        public boolean onScale( ScaleGestureDetector detector ) {
+            mScaleFactor *= detector.getScaleFactor();
+            mScaleFactor = Math.max( MIN_SCALE_FACTOR, Math.min( mScaleFactor, MAX_SCALE_FACTOR ) );
+
+            calculateDimensions();
+            invalidate();
+            return true;
+        }
     }
 }
