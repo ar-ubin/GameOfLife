@@ -4,7 +4,7 @@ package ar_ubin.gameoflife;
 import java.util.HashSet;
 import java.util.Set;
 
-class GameWorld
+public class GameWorld
 {
     private Set<Cell> mAliveCells = new HashSet<>();
 

@@ -11,6 +11,17 @@ import static org.junit.Assert.assertEquals;
 
 public class GameWorldTest
 {
+    protected static GameWorld createWorld( int width, int height ) {
+        GameWorld world = new GameWorld();
+        for( int i = 0; i < width; i++ ) {
+            for( int j = 0; j < height; j++ ) {
+                world.addCell( new Cell( i, j ) );
+            }
+        }
+
+        return world;
+    }
+
     @Test
     public void aSingleCellShouldHaveZeroNeighbours() throws Exception {
         //given
@@ -25,7 +36,7 @@ public class GameWorldTest
     }
 
     @Test
-    public void twoCellsNextToEchOtherShouldBeNeighbours() throws Exception {
+    public void twoCellsNextToEachOtherShouldBeNeighbours() throws Exception {
         //given
         GameWorld world = new GameWorld();
         world.addCell( new Cell( 0, 0 ) );
@@ -76,16 +87,5 @@ public class GameWorldTest
 
         //then
         assertEquals( 8, neighbours.size() );
-    }
-
-    protected static GameWorld createWorld( int width, int height ) {
-        GameWorld world = new GameWorld();
-        for( int i = 0; i < width; i++ ) {
-            for( int j = 0; j < height; j++ ) {
-                world.addCell( new Cell( i, j ) );
-            }
-        }
-
-        return world;
     }
 }

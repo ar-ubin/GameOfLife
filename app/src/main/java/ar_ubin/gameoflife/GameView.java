@@ -12,16 +12,14 @@ import java.util.Random;
 
 public class GameView extends View
 {
-    private GameWorld mWorld;
     private final float WORLD_WIDTH, WORLD_HEIGHT;
-    private float mColumns, mRows;
-    private float mCellWidth, mCellHeight;
-
-    private ScaleGestureDetector mScaleDetector;
     private final float MAX_SCALE_FACTOR = 3.0f;
     private final float DEFAULT_SCALE_FACTOR = 1.0f;
     private final float MIN_SCALE_FACTOR = 0.4f;
-
+    private GameWorld mWorld;
+    private float mColumns, mRows;
+    private float mCellWidth, mCellHeight;
+    private ScaleGestureDetector mScaleDetector;
     private float mScaleFactor = DEFAULT_SCALE_FACTOR;
 
     private Paint mGridPaint = new Paint();

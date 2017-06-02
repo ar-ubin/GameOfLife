@@ -69,7 +69,7 @@ class GameOfLife
         }
     }
 
-    public boolean isRunning(){
+    public boolean isRunning() {
         return mIsRunning;
     }
 }
